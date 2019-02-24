@@ -25,35 +25,29 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_map);
 
         // Gets the MapView from the XML layout and creates it
-        mapView = (MapView) findViewById(R.id.mapview);
+        mapView = findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
 
-
-        if (ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            map.setMyLocationEnabled(true);
-            return;
-        } else {
-
-            // Gets to GoogleMap from the MapView and does initialization stuff
-            mapView.getMapAsync(new OnMapReadyCallback() {
-                @Override
-                public void onMapReady(GoogleMap googleMap) {
-                    map = googleMap;
+        mapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                map = googleMap;
+                if (ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MapActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                    return;
+                } else {
+                    map.setMyLocationEnabled(true);
                     map.getUiSettings().setMyLocationButtonEnabled(true);
-
                     // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
                     MapsInitializer.initialize(MapActivity.this);
-
                     // Updates the location and zoom of the MapView
                     CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(12.971, 79.16366), 18.0f);
                     map.animateCamera(cameraUpdate);
+                    // Gets to GoogleMap from the MapView and does initialization stuff
+                    // Write you code here if permission already given.
                 }
-            });
-            // Write you code here if permission already given.
-
-        }
-
+            }
+        });
 
     }
 
