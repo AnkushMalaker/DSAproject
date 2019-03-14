@@ -16,12 +16,14 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.util.*;
 import android.os.Bundle;
 import android.content.Context;
-
+import android.view.View;
+import android.widget.Toast;
 
 
 public class MapActivity extends AppCompatActivity {
@@ -37,7 +39,6 @@ public class MapActivity extends AppCompatActivity {
 
         mapView = findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
-
 
 
 
@@ -58,6 +59,7 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                 });
+        //12.971682, 79.163311 <- SJT
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
@@ -71,8 +73,10 @@ public class MapActivity extends AppCompatActivity {
                     // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
                     MapsInitializer.initialize(MapActivity.this);
                     // Updates the location and zoom of the MapView
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 03.0f);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 2);
                     map.animateCamera(cameraUpdate);
+                    LatLng sjtShuttle = new LatLng(12.971682,79.163311 );
+                    map.addMarker(new MarkerOptions().position(sjtShuttle).title("Available shuttle"));
                     // Gets to GoogleMap from the MapView and does initialization stuff
                     // Write you code here if permission already given.
                 }
@@ -81,7 +85,28 @@ public class MapActivity extends AppCompatActivity {
     }
 
 
+    public void refresh(View view) {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            // Logic to handle location object
+                        }
+                        double x = location.getLatitude();
+                        double y = location.getLongitude();
+                        publicLocation=location;
+                        String loc = "Your location is:  "+Double.toString(x)+", " +Double.toString(y);
+                        Toast.makeText(getApplicationContext(),loc, Toast.LENGTH_LONG).show();
+                    }
 
+                });
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 2);
+        map.animateCamera(cameraUpdate);
+
+    }
 
     @Override
     protected void onResume() {
