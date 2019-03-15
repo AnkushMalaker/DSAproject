@@ -85,7 +85,6 @@ public class MapActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     public void refresh(View view) {
