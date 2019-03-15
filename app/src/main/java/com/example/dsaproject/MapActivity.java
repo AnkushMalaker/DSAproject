@@ -23,6 +23,7 @@ import java.util.*;
 import android.os.Bundle;
 import android.content.Context;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 
@@ -54,8 +55,10 @@ public class MapActivity extends AppCompatActivity {
                         double x = location.getLatitude();
                         double y = location.getLongitude();
                         publicLocation=location;
-                        String loc = "YOOO YOUR LOCATION IS: "+Double.toString(x)+"," +Double.toString(y);
-                        System.out.println(loc);
+                        //String loc = "YOOO YOUR LOCATION IS: "+Double.toString(x)+"," +Double.toString(y);
+                        //Toast.makeText(getApplicationContext(),loc, Toast.LENGTH_SHORT).show();
+                        Button b1 = findViewById(R.id.refButton);
+                        b1.performClick();
                     }
 
                 });
@@ -73,7 +76,7 @@ public class MapActivity extends AppCompatActivity {
                     // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
                     MapsInitializer.initialize(MapActivity.this);
                     // Updates the location and zoom of the MapView
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 2);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),500);
                     map.animateCamera(cameraUpdate);
                     LatLng sjtShuttle = new LatLng(12.971682,79.163311 );
                     map.addMarker(new MarkerOptions().position(sjtShuttle).title("Available shuttle"));
@@ -82,8 +85,8 @@ public class MapActivity extends AppCompatActivity {
                 }
             }
         });
-    }
 
+    }
 
     public void refresh(View view) {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -103,8 +106,10 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                 });
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 2);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 500);
         map.animateCamera(cameraUpdate);
+
+
 
     }
 
