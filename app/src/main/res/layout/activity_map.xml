@@ -22,7 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+   <Button
         android:id="@+id/refButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,6 +35,6 @@
         android:text="Refresh"
         app:layout_constraintBottom_toBottomOf="@+id/mapview"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+       app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
