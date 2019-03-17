@@ -55,8 +55,6 @@ public class MapActivity extends AppCompatActivity {
                         double x = location.getLatitude();
                         double y = location.getLongitude();
                         publicLocation=location;
-                        //String loc = "YOOO YOUR LOCATION IS: "+Double.toString(x)+"," +Double.toString(y);
-                        //Toast.makeText(getApplicationContext(),loc, Toast.LENGTH_SHORT).show();
                         Button b1 = findViewById(R.id.refButton);
                         b1.performClick();
                     }
