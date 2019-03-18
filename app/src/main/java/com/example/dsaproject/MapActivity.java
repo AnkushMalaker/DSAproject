@@ -1,6 +1,7 @@
 package com.example.dsaproject;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -18,10 +19,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.*;
 import android.os.Bundle;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -29,6 +36,7 @@ import android.widget.Toast;
 
 public class MapActivity extends AppCompatActivity {
     Location publicLocation = new Location("dummy");
+    DatabaseReference shuttledb;
     MapView mapView;
     GoogleMap map;
     private FusedLocationProviderClient fusedLocationClient;
@@ -37,10 +45,9 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         // Gets the MapView from the XML layout and creates it
-
+        shuttledb = FirebaseDatabase.getInstance().getReference();
         mapView = findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
-
 
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -60,6 +67,22 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                 });
+        FirebaseDatabase.getInstance().getReference()
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        int i=0;
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            shuttleCabs shuttleCab = snapshot.getValue(shuttleCabs.class);
+                            LatLng shuttle = new LatLng(shuttleCab.getCabx(),shuttleCab.getCaby() );
+                            map.addMarker(new MarkerOptions().position(shuttle).title("Available shuttle" + Integer.toString(i)));
+                            i++;
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
         //12.971682, 79.163311 <- SJT
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
@@ -76,8 +99,9 @@ public class MapActivity extends AppCompatActivity {
                     // Updates the location and zoom of the MapView
                     CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),500);
                     map.animateCamera(cameraUpdate);
-                    LatLng sjtShuttle = new LatLng(12.971682,79.163311 );
-                    map.addMarker(new MarkerOptions().position(sjtShuttle).title("Available shuttle"));
+//                    LatLng sjtShuttle = new LatLng(12.971682,79.163311 );
+//                    map.addMarker(new MarkerOptions().position(sjtShuttle).title("Available shuttle"));
+                    //firebase_node.once('value', function(snapshot) { alert('Count: ' + snapshot.numChildren()); });
                     // Gets to GoogleMap from the MapView and does initialization stuff
                     // Write you code here if permission already given.
                 }
@@ -95,11 +119,8 @@ public class MapActivity extends AppCompatActivity {
                         if (location != null) {
                             // Logic to handle location object
                         }
-                        double x = location.getLatitude();
-                        double y = location.getLongitude();
                         publicLocation=location;
-                        String loc = "Your location is:  "+Double.toString(x)+", " +Double.toString(y);
-                        Toast.makeText(getApplicationContext(),loc, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(),"refreshed", Toast.LENGTH_LONG).show();
                     }
 
                 });

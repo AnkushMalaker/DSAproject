@@ -1,4 +1,4 @@
-package com.example.driverapp;
+package com.example.dsaproject;
 
 public class shuttleCabs {
     String cabID;
@@ -6,7 +6,7 @@ public class shuttleCabs {
     double caby;
     int cabpax;
 
-    public  shuttleCabs(){
+    public shuttleCabs(){
 
     }
 
