@@ -71,6 +71,7 @@ public class MapActivity extends AppCompatActivity {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        map.clear();
                         int i=0;
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             shuttleCabs shuttleCab = snapshot.getValue(shuttleCabs.class);
@@ -99,9 +100,6 @@ public class MapActivity extends AppCompatActivity {
                     // Updates the location and zoom of the MapView
                     CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),500);
                     map.animateCamera(cameraUpdate);
-//                    LatLng sjtShuttle = new LatLng(12.971682,79.163311 );
-//                    map.addMarker(new MarkerOptions().position(sjtShuttle).title("Available shuttle"));
-                    //firebase_node.once('value', function(snapshot) { alert('Count: ' + snapshot.numChildren()); });
                     // Gets to GoogleMap from the MapView and does initialization stuff
                     // Write you code here if permission already given.
                 }
@@ -124,6 +122,7 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                 });
+
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 500);
         map.animateCamera(cameraUpdate);
 
