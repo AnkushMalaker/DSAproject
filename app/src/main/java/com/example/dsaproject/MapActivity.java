@@ -1,30 +1,27 @@
 package com.example.dsaproject;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.location.*;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.*;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 import android.os.Bundle;
 import android.content.Context;
@@ -33,13 +30,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.json.JSONObject;
 
-public class MapActivity extends AppCompatActivity {
+
+public class MapActivity extends AppCompatActivity  implements TaskLoadedCallback {
     Location publicLocation = new Location("dummy");
     DatabaseReference shuttledb;
     MapView mapView;
     GoogleMap map;
+    ArrayList<LatLng> cabLocs = new ArrayList<LatLng>();
+    LatLng closestCab;
+    Polyline currentPolyline;
     private FusedLocationProviderClient fusedLocationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,8 +51,6 @@ public class MapActivity extends AppCompatActivity {
         shuttledb = FirebaseDatabase.getInstance().getReference();
         mapView = findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
-
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
@@ -67,24 +68,10 @@ public class MapActivity extends AppCompatActivity {
                     }
 
                 });
-        FirebaseDatabase.getInstance().getReference()
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        map.clear();
-                        int i=0;
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            shuttleCabs shuttleCab = snapshot.getValue(shuttleCabs.class);
-                            LatLng shuttle = new LatLng(shuttleCab.getCabx(),shuttleCab.getCaby() );
-                            map.addMarker(new MarkerOptions().position(shuttle).title("Available shuttle" + Integer.toString(i)));
-                            i++;
-                        }
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                    }
-                });
-        //12.971682, 79.163311 <- SJT
+        ;
+
+
+
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
@@ -98,13 +85,86 @@ public class MapActivity extends AppCompatActivity {
                     // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
                     MapsInitializer.initialize(MapActivity.this);
                     // Updates the location and zoom of the MapView
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),500);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),25);
                     map.animateCamera(cameraUpdate);
                     // Gets to GoogleMap from the MapView and does initialization stuff
                     // Write you code here if permission already given.
+                    FirebaseDatabase.getInstance().getReference()
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    map.clear();
+                                    cabLocs.clear();
+                                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                        shuttleCabs shuttleCab = snapshot.getValue(shuttleCabs.class);
+                                        LatLng shuttle = new LatLng(shuttleCab.getCabx(),shuttleCab.getCaby() );
+                                        cabLocs.add(shuttle);
+                                    }
+                                    closestCab = findClosest(cabLocs);
+                                    map.addMarker(new MarkerOptions().position(closestCab).title("Closest Shuttle"));
+                                    LatLng publicLatLng = new LatLng(publicLocation.getLongitude(),publicLocation.getLatitude());
+                                    String url = getDirectionsUrl(publicLatLng,closestCab);
+                                    new FetchURL(MapActivity.this).execute(url, "driving");
+                                    Toast.makeText(MapActivity.this, "Got till here", Toast.LENGTH_SHORT);
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+                                }
+                            });
+
                 }
             }
+
         });
+
+    }
+
+
+    //Copy Pasted Code:
+    private String getDirectionsUrl(LatLng origin,LatLng dest){
+
+        // Origin of route
+        String str_origin = "origin="+origin.latitude+","+origin.longitude;
+
+        // Destination of route
+        String str_dest = "destination="+dest.latitude+","+dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+
+        // Building the parameters to the web service
+        String parameters = str_origin+"&"+str_dest+"&"+sensor;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+"&key=AIzaSyDZTwEUFdGt92Tm6QV0gdOURgpBo-CRcHc";
+        //https://maps.googleapis.com/maps/api/directions/json?origin=Toronto&destination=Montreal &key=YOUR_API_KEY
+        return url;
+    }
+
+    //End of copy pasted code
+
+
+
+
+
+    public LatLng findClosest(ArrayList<LatLng> X){
+    int i;
+    LatLng closestpt = new LatLng(0,0);
+    double dist = 100000000;
+    for (i=0;i < X.size();i++){
+        Location temp = new Location("dummy");
+        temp.setLongitude(X.get(i).longitude);
+        temp.setLatitude(X.get(i).latitude);
+        if (publicLocation.distanceTo(temp)<dist){
+            dist = publicLocation.distanceTo(temp);
+            closestpt = X.get(i);
+        }
+    }
+        return closestpt;
     }
 
     public void refresh(View view) {
@@ -123,7 +183,7 @@ public class MapActivity extends AppCompatActivity {
 
                 });
 
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 500);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 25);
         map.animateCamera(cameraUpdate);
 
 
@@ -149,5 +209,11 @@ public class MapActivity extends AppCompatActivity {
     }
 
 
-
+    @Override
+    public void onTaskDone(Object... values) {
+        if (currentPolyline!= null){
+            currentPolyline.remove();
+        }
+        currentPolyline = map.addPolyline((PolylineOptions)values[0]);
+    }
 }
