@@ -21,6 +21,8 @@ import com.google.firebase.database.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.*;
 import android.os.Bundle;
@@ -28,8 +30,11 @@ import android.content.Context;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -41,12 +46,14 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
     ArrayList<LatLng> cabLocs = new ArrayList<LatLng>();
     LatLng closestCab;
     Polyline currentPolyline;
+    TextView timeLeft;
     private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        timeLeft = findViewById(R.id.timeText);
         // Gets the MapView from the XML layout and creates it
         shuttledb = FirebaseDatabase.getInstance().getReference();
         mapView = findViewById(R.id.mapview);
@@ -85,7 +92,7 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
                     // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
                     MapsInitializer.initialize(MapActivity.this);
                     // Updates the location and zoom of the MapView
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),25);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()),15);
                     map.animateCamera(cameraUpdate);
                     // Gets to GoogleMap from the MapView and does initialization stuff
                     // Write you code here if permission already given.
@@ -98,21 +105,28 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
                                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                         shuttleCabs shuttleCab = snapshot.getValue(shuttleCabs.class);
                                         LatLng shuttle = new LatLng(shuttleCab.getCabx(),shuttleCab.getCaby() );
-                                        cabLocs.add(shuttle);
+                                        if (shuttleCab.getCabpax()>=13) continue;
+                                        else cabLocs.add(shuttle);
                                     }
                                     closestCab = findClosest(cabLocs);
                                     map.addMarker(new MarkerOptions().position(closestCab).title("Closest Shuttle"));
-                                    LatLng publicLatLng = new LatLng(publicLocation.getLongitude(),publicLocation.getLatitude());
+                                    LatLng publicLatLng = new LatLng(publicLocation.getLatitude(),publicLocation.getLongitude());
                                     String url = getDirectionsUrl(publicLatLng,closestCab);
                                     new FetchURL(MapActivity.this).execute(url, "driving");
-                                    Toast.makeText(MapActivity.this, "Got till here", Toast.LENGTH_SHORT);
+
+                                    Location dest = new Location("dummy");
+                                    dest.setLatitude(closestCab.latitude);
+                                    dest.setLongitude(closestCab.longitude);
+                                    String timeleft = "Nearest cab ETA: " + Integer.toString((int)publicLocation.distanceTo(dest)/300)+ " minutes";
+                                    timeLeft.setText(timeleft);
+
+                                    Toast.makeText(MapActivity.this, "Got till here", Toast.LENGTH_SHORT).show();
                                 }
 
                                 @Override
                                 public void onCancelled(DatabaseError databaseError) {
                                 }
                             });
-
                 }
             }
 
@@ -121,7 +135,7 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
     }
 
 
-    //Copy Pasted Code:
+
     private String getDirectionsUrl(LatLng origin,LatLng dest){
 
         // Origin of route
@@ -130,23 +144,19 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
         // Destination of route
         String str_dest = "destination="+dest.latitude+","+dest.longitude;
 
-        // Sensor enabled
-        String sensor = "sensor=false";
-
         // Building the parameters to the web service
-        String parameters = str_origin+"&"+str_dest+"&"+sensor;
+        String parameters = str_origin+"&"+str_dest;
 
         // Output format
         String output = "json";
 
         // Building the url to the web service
         String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+"&key=AIzaSyDZTwEUFdGt92Tm6QV0gdOURgpBo-CRcHc";
+//        String url = "https://maps.googleapis.com/maps/api/directions/json?origin=12.975170,79.163938&destination=12.971590,79.163318&key=AIzaSyDZTwEUFdGt92Tm6QV0gdOURgpBo-CRcHc";
         //https://maps.googleapis.com/maps/api/directions/json?origin=Toronto&destination=Montreal &key=YOUR_API_KEY
+        System.out.println(url);
         return url;
     }
-
-    //End of copy pasted code
-
 
 
 
@@ -183,7 +193,7 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
 
                 });
 
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 25);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(publicLocation.getLatitude(), publicLocation.getLongitude()), 15);
         map.animateCamera(cameraUpdate);
 
 

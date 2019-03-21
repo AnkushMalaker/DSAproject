@@ -3,7 +3,6 @@ package com.example.dsaproject;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,9 +10,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by Vishal on 10/20/2018.
- */
 
 public class FetchURL extends AsyncTask<String, Void, String> {
     Context mContext;
@@ -41,7 +37,7 @@ public class FetchURL extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        PointsParser parserTask = new PointsParser(mContext, directionMode);
+        PointsParser parserTask = new PointsParser(this.mContext, directionMode);
         // Invokes the thread for parsing the JSON data
         parserTask.execute(s);
     }

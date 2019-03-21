@@ -1,5 +1,9 @@
 package com.example.dsaproject;
 
+import android.content.Context;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -10,17 +14,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by Vishal on 10/20/2018.
- */
-
 public class DataParser {
+    Context context;
+    DataParser(Context mContext){
+        context = mContext;
+    }
+
     public List<List<HashMap<String, String>>> parse(JSONObject jObject) {
 
         List<List<HashMap<String, String>>> routes = new ArrayList<>();
         JSONArray jRoutes;
         JSONArray jLegs;
         JSONArray jSteps;
+        JSONObject dist;
         try {
             jRoutes = jObject.getJSONArray("routes");
             /** Traversing all routes */
@@ -45,7 +51,11 @@ public class DataParser {
                             path.add(hm);
                         }
                     }
+                    JSONObject steps = jLegs.getJSONObject(0);
+                    JSONObject distance = steps.getJSONObject("distance");
+                    System.out.println("Qwerty: " + Double.toString(distance.getDouble("value")));
                     routes.add(path);
+                    Toast.makeText(context, "Nearest cab ETA: "+Double.toString(distance.getDouble("value")*(1000/300)), Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -57,10 +67,6 @@ public class DataParser {
     }
 
 
-    /**
-     * Method to decode polyline points
-     * Courtesy : https://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
-     */
     private List<LatLng> decodePoly(String encoded) {
 
         List<LatLng> poly = new ArrayList<>();
