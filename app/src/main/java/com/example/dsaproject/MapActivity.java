@@ -112,7 +112,7 @@ public class MapActivity extends AppCompatActivity  implements TaskLoadedCallbac
                                     map.addMarker(new MarkerOptions().position(closestCab).title("Closest Shuttle"));
                                     LatLng publicLatLng = new LatLng(publicLocation.getLatitude(),publicLocation.getLongitude());
                                     String url = getDirectionsUrl(publicLatLng,closestCab);
-                                    new FetchURL(MapActivity.this).execute(url, "driving");
+                                    new FetchURL(MapActivity.this   ).execute(url, "driving");
 
                                     Location dest = new Location("dummy");
                                     dest.setLatitude(closestCab.latitude);
